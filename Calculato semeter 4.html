@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semester Grade Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px; /* Reduced padding for smaller screens */
+      background: #f7f7f7;
+      margin: 0; /* Remove default body margin */
+    }
+    h1 {
+      text-align: center;
+      color: #00796b;
+      font-size: 1.8em; /* Adjusted font size for better readability on phones */
+      margin-bottom: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px; /* Adjusted margin */
+      display: block; /* Allows table to scroll horizontally if needed */
+      overflow-x: auto; /* Enables horizontal scrolling for tables on small screens */
+      -webkit-overflow-scrolling: touch; /* Smooth scrolling for iOS */
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px; /* Reduced padding in cells */
+      text-align: center;
+      white-space: nowrap; /* Prevent text from wrapping in table cells */
+    }
+    th {
+      background-color: #e0f2f1;
+      font-size: 0.9em; /* Smaller font for headers */
+    }
+    td:first-child {
+      text-align: left; /* Align module names to the left for better readability */
+      width: 40%; /* Give more width to module names */
+    }
+    input[type="number"] {
+      width: 50px; /* Slightly reduced input width */
+      padding: 5px;
+      font-size: 1em;
+      box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    }
+    tfoot td {
+      font-weight: bold;
+      background-color: #e0f7fa;
+      padding: 10px;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 1.1em; /* Adjusted font size */
+      text-align: center;
+      padding: 10px;
+      background-color: #e0f7fa;
+      border-radius: 5px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 30px; /* Adjusted margin */
+      font-size: 0.8em; /* Smaller footer font */
+      color: gray;
+      padding-bottom: 10px;
+    }
+
+    /* Media Queries for even smaller screens (e.g., older phones) */
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.5em;
+      }
+      th, td {
+        padding: 6px;
+        font-size: 0.85em;
+      }
+      input[type="number"] {
+        width: 45px;
+        font-size: 0.9em;
+      }
+      #result {
+        font-size: 1em;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Semester 4 Grade Calculator</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Module</th>
+      <th>Exam</th>
+      <th>TD</th>
+      <th>TP</th>
+      <th>Note</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<div id="result"></div>
+
+<footer>By Anis Gres</footer>
+
+<script>
+const modules = [
+  { name: "Dessin Assisté par Ordinateur", type: "exam+td", coef: 1 },
+  { name: "Electricité industrielle", type: "exam", coef: 1 },
+  { name: "Fabrication Mécanique", type: "exam", coef: 1 },
+  { name: "Mathématiques 4", type: "exam+td", coef: 2 },
+  { name: "Méthodes numériques", type: "exam+td", coef: 2 },
+  { name: "Résistance des matériaux", type: "exam+td", coef: 2 },
+  { name: "Sciences des Matériaux", type: "exam", coef: 1 },
+  { name: "Techniques d'expression et de communication", type: "exam", coef: 1 },
+  { name: "Thermodynamique 2", type: "exam+td", coef: 2 },
+  { name: "TP Fabrication Mécanique", type: "tp", coef: 1 },
+  { name: "TP Mécanique des fluides", type: "tp", coef: 1 },
+  { name: "TP Méthodes numériques", type: "tp", coef: 1 },
+  { name: "TP Résistance des matériaux", type: "tp", coef: 1 }
+];
+
+const tbody = document.getElementById("tableBody");
+
+modules.forEach((mod, idx) => {
+  const tr = document.createElement("tr");
+  const id = `m${idx}`;
+
+  tr.innerHTML = `
+    <td>${mod.name}</td>
+    <td>${mod.type.includes("exam") ? `<input type="number" id="${id}-exam" min="0" max="20" step="0.5" inputmode="decimal">` : "/"}</td>
+    <td>${mod.type.includes("td") ? `<input type="number" id="${id}-td" min="0" max="20" step="0.5" inputmode="decimal">` : "/"}</td>
+    <td>${mod.type === "tp" ? `<input type="number" id="${id}-tp" min="0" max="20" step="0.5" inputmode="decimal">` : "/"}</td>
+    <td id="${id}-note">-</td>
+  `;
+  tbody.appendChild(tr);
+});
+
+const resultDiv = document.getElementById("result");
+
+document.addEventListener("input", () => {
+  let total = 0;
+  let totalCoef = 0;
+
+  modules.forEach((mod, idx) => {
+    const id = `m${idx}`;
+    let note = 0;
+
+    // Get input values, default to 0 if empty or invalid
+    const examInput = document.getElementById(`${id}-exam`);
+    const tdInput = document.getElementById(`${id}-td`);
+    const tpInput = document.getElementById(`${id}-tp`);
+
+    const exam = examInput ? (parseFloat(examInput.value) || 0) : 0;
+    const td = tdInput ? (parseFloat(tdInput.value) || 0) : 0;
+    const tp = tpInput ? (parseFloat(tpInput.value) || 0) : 0;
+
+    // Validate inputs to be within 0-20 range
+    const validateInput = (value) => Math.max(0, Math.min(20, value));
+
+    if (mod.type === "exam+td") {
+      note = (validateInput(exam) * 0.6 + validateInput(td) * 0.4);
+    } else if (mod.type === "exam") {
+      note = validateInput(exam);
+    } else if (mod.type === "tp") {
+      note = validateInput(tp);
+    }
+
+    document.getElementById(`${id}-note`).innerText = note.toFixed(2);
+    total += note * mod.coef;
+    totalCoef += mod.coef;
+  });
+
+  const finalAvg = totalCoef ? (total / totalCoef).toFixed(2) : "-";
+  resultDiv.innerHTML = `<strong>Final Semester Average:</strong> ${finalAvg}`;
+});
+</script>
+
+</body>
+</html>
